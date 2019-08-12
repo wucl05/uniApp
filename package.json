@@ -1,0 +1,15 @@
+{
+  "name": "uniapp",
+  "version": "1.0.0",
+  "description": "uniApp",
+  "main": "script.js",
+  "scripts": {
+    "clone": "node script.js"
+  },
+  "repository": {
+    "type": "git"
+  },
+  "dependencies": {
+    "shelljs": "^0.8.3"
+  }
+}
