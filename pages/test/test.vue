@@ -22,6 +22,8 @@
 </template>
 
 <script>
+import uniBadge from '@/components/uni-badge/uni-badge.vue'
+import cityData from '../../../common/city.data.js';
 	export default {
 		data() {
 			return {
@@ -51,6 +53,7 @@
 </script>
 
 <style scoped>
+    @import "./editor-icon.css";
 	page {
 			display: flex;
 			flex-direction: column;

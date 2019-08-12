@@ -1,5 +1,6 @@
 const fs = require('fs')
-const shell = require('shelljs')
+const { exec } = require('child_process');
+const { join } = require('path');
 const read = function(fileName){
     return new Promise((resolve,reject)=>{
         fs.readFile(fileName,"utf-8",function(err,data){
@@ -36,6 +37,54 @@ const getPageJson = async function(pagePath){
         console.log("path:",path.path)
     }
 }
+
+const delDir = function(path){
+    let files = [];
+    if(fs.existsSync(path)){
+        files = fs.readdirSync(path);
+        files.forEach((file, index) => {
+            let curPath = path + "/" + file;
+            if(fs.statSync(curPath).isDirectory()){
+                delDir(curPath); //递归删除文件夹
+            } else {
+                fs.unlinkSync(curPath); //删除文件
+            }
+        });
+        fs.rmdirSync(path);
+    }
+}
+
+const cloneGit = function(gitUrl){
+    return new Promise((resolve,reject)=>{
+        delDir("c:/cloneGitRepositoryTemp")
+        exec(`git clone ${gitUrl || "git@github.com:wucl05/uniApp.git"} c:/cloneGitRepositoryTemp`,(err,stdout,stderr)=>{
+            console.log("err",err)
+            if(!err){
+                console.log(`clone success`)
+                resolve(true)
+            }else{
+                console.log(`clone error`)
+                resolve(false)
+            }
+        })
+    })
+   
+}
+
+const clone =async function(git,pagePath){
+    const res =await cloneGit(git)
+    if(res){
+        pagePath = /.vue$/g.test(pagePath)?pagePath:`${join(pagePath)}.vue`
+        const fileName = join("c:/cloneGitRepositoryTemp",pagePath)
+        const pageCode =await read(fileName)
+        console.log("pageCode",pageCode)
+    }else{
+        new Error("clone error")
+    }
+}
+clone("git@github.com:wucl05/uniApp.git","pages/test/test")
 //getPageJson("pages/tabBar/API/API")
 //addPage("pages.json")
-console.log("npm")
+// cloneGit()
+
+
