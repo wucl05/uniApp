@@ -10,7 +10,7 @@
 					<input type="text" v-model="from.user" placeholder="请输入用户名"/>
 				</view>
 				<view class="item">
-					<image class="icon" src="/static/lock.png" mode=""></image>
+					<image class="icon" src = "/static/lock.png"></image>
 					<input type="text" v-model="from.pwd" placeholder="请输入密码"/>
 				</view>
 			</view>
@@ -60,6 +60,12 @@ import http from 'axios';
 			flex-direction: column;
 			box-sizing: border-box;
 			background-color: #fff;
+	}
+	.backTest{
+		background-image:url('/static/api.png');
+	}
+	.backTest2{
+		background-image: url ('/static/ap222i.png');
 	}
 	.pic{
 		display: flex;
