@@ -77,10 +77,30 @@ const clone =async function(git,pagePath){
         pagePath = /.vue$/g.test(pagePath)?pagePath:`${join(pagePath)}.vue`
         const fileName = join("c:/cloneGitRepositoryTemp",pagePath)
         const pageCode =await read(fileName)
-        console.log("pageCode",pageCode)
+        console.log("pageCode:",pageCode)
+        const importArr = getimportPath(pageCode)
+        console.log("importArr",importArr)
     }else{
         new Error("clone error")
     }
+}
+const getimportPath = function(str){
+    const arr1 = str.match(/import\s?\w*\s?from\s?\s\S*('|")/g)
+    const arr2 = str.match(/@import\s?\s\S*('|")/g)
+    const resArr = {
+        files:[],
+        pack:[]
+    }
+    arr1.concat(arr2).forEach((item)=>{
+        let tmp = item.match(/(['"])(?:(?!\1).)*?\1/g)[0]
+        tmp = tmp.substr(1,1)=="@"?tmp.substr(2,tmp.length-3):tmp.substr(1,tmp.length-2)
+        if(tmp.indexOf("/")>=0){
+            resArr.files.push(tmp)
+        }else{
+            resArr.pack.push(tmp)
+        }
+    })
+    return resArr
 }
 clone("git@github.com:wucl05/uniApp.git","pages/test/test")
 //getPageJson("pages/tabBar/API/API")
