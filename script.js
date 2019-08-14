@@ -103,18 +103,10 @@ const relyon = async function(filePath,full){
             filePath = filePath.substr(tmp.length,filePath.length-tmp.length)
         }
         const fileName = join("c:/cloneGitRepositoryTemp",filePath)
-        console.log("fileName：",fileName)
-        console.log("filePath:",filePath)
-        console.log("full:",full)
         const pageCode =await read(fileName)
         const importArr = getimportPath(pageCode,filePath)
         const imgArr = getimgSrc(pageCode,filePath)
         const bgArr = getbackgroundUrl(pageCode,filePath)
-        console.log('importArr:',importArr)
-        console.log('imgArr:',imgArr)
-        console.log('bgArr:',bgArr)
-        
-
         const fileArr = importArr.files.concat(imgArr,bgArr)
         for(let i=0;i<fileArr.length;i++){
             let item = fileArr[i]
@@ -153,8 +145,6 @@ const getimportPath = function(str,pagePath){
                 const dirArr = pagePath.split("\\")
                 dirArr.splice(dirArr.length-1,1)
                 const pathTemp = dirArr.join("/")
-                console.log("dirArr:",dirArr)
-                console.log('pathTemp:',pathTemp)
                 resArr.files.push({
                     from:join("c:/cloneGitRepositoryTemp",pathTemp,tmp),
                     to:join(__dirname,pathTemp,tmp)

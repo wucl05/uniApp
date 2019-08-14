@@ -65,7 +65,7 @@ import http from 'axios';
 		background-image:url('/static/api.png');
 	}
 	.backTest2{
-		background-image: url ('/static/ap222i.png');
+		background-image: url ('/static/apiHL.png');
 	}
 	.pic{
 		display: flex;
