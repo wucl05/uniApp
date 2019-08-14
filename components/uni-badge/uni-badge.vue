@@ -3,6 +3,7 @@
 </template>
 
 <script>
+    import imchat from '@/components/im-chat/chatinput.vue'
 	export default {
 		name: 'UniBadge',
 		props: {
