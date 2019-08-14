@@ -10,6 +10,7 @@
     "type": "git"
   },
   "dependencies": {
+    "ncp": "^2.0.0",
     "nodegit": "^0.25.0",
     "shelljs": "^0.8.3"
   }

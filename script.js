@@ -1,6 +1,7 @@
 const fs = require('fs')
 const { exec } = require('child_process');
-const { join } = require('path');
+const { join,dirname,basename,extname } = require('path');
+const ncp = require('ncp').ncp
 const read = function(fileName){
     return new Promise((resolve,reject)=>{
         fs.readFile(fileName,"utf-8",function(err,data){
@@ -75,13 +76,58 @@ const clone =async function(git,pagePath){
     const res =await cloneGit(git)
     if(res){
         pagePath = /.vue$/g.test(pagePath)?pagePath:`${join(pagePath)}.vue`
-        const fileName = join("c:/cloneGitRepositoryTemp",pagePath)
-        const pageCode =await read(fileName)
-        const importArr = getimportPath(pageCode,pagePath)
-        console.log("importArr",importArr)
+        await relyon(pagePath)
+        // const fileName = join("c:/cloneGitRepositoryTemp",pagePath)
+        // const pageCode =await read(fileName)
+        // const importArr = getimportPath(pageCode,pagePath)
+        // const imgArr = getimgSrc(pageCode,pagePath)
+        // const bgArr = getbackgroundUrl(pageCode,pagePath)
+        // console.log("importArr",importArr)
+        // console.log("imgArr",imgArr)
+        // console.log("bgArr",bgArr)
+        // const fileArr = importArr.files.concat(imgArr,bgArr)
+        // console.log("fileArr:",fileArr)
+        // fileArr.forEach(async item=>{
+        //     if(await copy(item.from,item.to)){
+        //         console.log(basename(item.to))
+        //     }
+        // })
     }else{
         new Error("clone error")
     }
+}
+const relyon = async function(filePath,full){
+    return new Promise(async (resolve,reject)=>{
+        if(full){
+            const tmp = 'c:\\cloneGitRepositoryTemp\\'
+            filePath = filePath.substr(tmp.length,filePath.length-tmp.length)
+        }
+        const fileName = join("c:/cloneGitRepositoryTemp",filePath)
+        console.log("fileName：",fileName)
+        console.log("filePath:",filePath)
+        console.log("full:",full)
+        const pageCode =await read(fileName)
+        const importArr = getimportPath(pageCode,filePath)
+        const imgArr = getimgSrc(pageCode,filePath)
+        const bgArr = getbackgroundUrl(pageCode,filePath)
+        const fileArr = importArr.files.concat(imgArr,bgArr)
+        fileArr.forEach(async item=>{
+            console.log("from:",item.from)
+            console.log("from exit",extname(item.from))
+            const exts = ['.vue','.js','.css','.less']
+            if(exts.includes(extname(item.from))){
+                console.log("递归",item.from)
+                await relyon(item.from,true)
+            }
+            if(await copy(item.from,item.to)){
+                console.log(basename(item.to))
+            }
+        })
+        const to = join(__dirname,filePath)
+        await copy(fileName,to)
+        console.log(basename(to))
+        resolve()
+    })
 }
 const getimportPath = function(str,pagePath){
     const arr1 = str.match(/import\s?\w*\s?from\s?\s\S*('|")/g)
@@ -115,9 +161,9 @@ const getimportPath = function(str,pagePath){
     })
     return resArr
 }
-const getimgSrc = async function(str,pagePath){
-    const res = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
-    const imagesSrc = res.match(/<image\b.*?(?:\>|\/>)/g)
+const getimgSrc =function(str,pagePath){
+    //const str = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
+    const imagesSrc = str.match(/<image\b.*?(?:\>|\/>)/g)
     const srcs = []
     imagesSrc.forEach(item=>{
         let src = item.match(/src\s?=\s?[\'\"]?([^\'\"]*)[\'\"]?/g)[0]
@@ -138,20 +184,68 @@ const getimgSrc = async function(str,pagePath){
             })
         }
     })
-    console.log("srcs:",srcs)
     return srcs
 }
-const getbackgroundUrl = function(){
-    const res = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
-    const imagesSrc = res.match(/url\s?\(.*?(\))\s?/g)
-    console.log("imagesSrc",imagesSrc)
+const getbackgroundUrl =function(str,pagePath){
+    //const str = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
+    const imagesSrc = str.match(/url\s?\(.*?(\))\s?/g)
+    const srcs = []
+    imagesSrc.forEach(src=>{
+        src = src.match(/(['"])(?:(?!\1).)*?\1/g)[0]
+        const dirArr = pagePath.indexOf("/")>=0?pagePath.split("/"):pagePath.split("\\")
+        dirArr.splice(dirArr.length-1,1)
+        const pathTemp = dirArr.join("/")
+        src = src.substr(1,src.length-2)
+        if(src.indexOf("../")>=0 || src.indexOf("./")>=0){
+            srcs.push({
+                from:join("c:/cloneGitRepositoryTemp",pathTemp,src),
+                to:join(__dirname,pathTemp,src)
+            })
+        }else{
+            srcs.push({
+                from:join("c:/cloneGitRepositoryTemp",src),
+                to:join(__dirname,src)
+            })
+        }
+    })
+    return srcs
 }
-getimgSrc("",'pages/test/test')
-//clone("git@github.com:wucl05/uniApp.git","pages/test/test")
+const createDir = (name)=>{
+    if (fs.existsSync(name)) {
+        return true;
+    } else {
+        if (createDir(dirname(name))) {
+            fs.mkdirSync(name);
+            return true;
+        }
+    }
+}
+const copy = async (from,to)=>{
+    return new Promise((resolve,reject)=>{
+        createDir(dirname(to))
+        ncp(from, to, function (err) {
+            if (err) {
+                resolve(false)
+                return console.error(err);
+            }
+            resolve(true)
+        });
+    })
+}
+//copy('c:/uni.png', 'd:/111111/uni.png')
+// ncp('c:/uni.png', 'd:/111111/uni.png', function (err) {
+//     if (err) {
+//       return console.error(err);
+//     }
+//     console.log('done!');
+// });
+//getbackgroundUrl("",'pages/test/test')
+//getimgSrc("",'pages/test/test')
+clone("git@github.com:wucl05/uniApp.git","pages/test/test")
 //getPageJson("pages/tabBar/API/API")
 //addPage("pages.json")
 // cloneGit()
 //console.log(__dirname)
 //console.log(join("c:/cloneGitRepositoryTemp",'/static/lock.png'))
-
+//console.log(basename("c:/cloneGitRepositoryTemp/lock.png"))
 
