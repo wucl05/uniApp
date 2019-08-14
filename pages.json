@@ -1,12 +1,18 @@
 {
 	"pages":[
-		// pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
 		{
-		    "path" : "pages/test/test",
-		    "style" : {
-				"navigationBarTitleText":"测试页面"
-			}
+			"path":"pages/tabBar/API/API",
+			"sytle":{"navigationBarTitleText":"接口","app-plus":{"titleNView":{"buttons":[{"text":"","fontSrc":"/static/uni.ttf","fontSize":"22px","color":"#999999"}]}}}
 		},
+		{
+			"path":"pages/tabBar/API/API",
+			"sytle":{"navigationBarTitleText":"接口","app-plus":{"titleNView":{"buttons":[{"text":"","fontSrc":"/static/uni.ttf","fontSize":"22px","color":"#999999"}]}}}
+		},
+		{
+			"path":"pages/test/test",
+			"sytle":{"navigationBarTitleText":"测试页面"}
+		},
+		// pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
 		{
 			"path": "pages/tabBar/component/component",
 			"style": {

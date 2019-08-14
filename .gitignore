@@ -10,3 +10,4 @@ dist/
 .idea/
 .eslintCache
 .editorconfig
+public_common

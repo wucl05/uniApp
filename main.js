@@ -5,7 +5,7 @@ import pageHead from './components/page-head.vue'
 import pageFoot from './components/page-foot.vue'
 import uLink from '@/components/uLink.vue'
 import store from './store'
-import {post,get} from '@/common/http.js'
+import {post,get} from '@/public_common/http.js'
 
 Vue.config.productionTip = false
 

@@ -2,6 +2,7 @@ const fs = require('fs')
 const { exec } = require('child_process');
 const { join,dirname,basename,extname } = require('path');
 const ncp = require('ncp').ncp
+const colors = require('colors')
 const read = function(fileName){
     return new Promise((resolve,reject)=>{
         fs.readFile(fileName,"utf-8",function(err,data){
@@ -24,19 +25,26 @@ const save = function(fileName,data){
           })
     })
 }
-const addPage = async function(fileName){
+const addPage = async function(pagePath){
+    const pageJson = await getPageJson(pagePath)
+    const fileName = join(__dirname,"pages.json")
     let pagesJson = await read(fileName)
-    pagesJson = pagesJson.replace(/\{\s*\"pages\"\:\s*\[/g,`{\r\n\t"pages":[\r\n\t\t{\r\n\t\t\t"path":"pages/test/hhh",\r\n\t\t\t"sytle":{}\r\n\t\t},`)
+    pagesJson = pagesJson.replace(/\{\s*\"pages\"\:\s*\[/g,`{\r\n\t"pages":[\r\n\t\t{\r\n\t\t\t"path":"${pageJson.path}",\r\n\t\t\t"sytle":${JSON.stringify(pageJson.style)}\r\n\t\t},`)
+    console.log(colors.green('✔ '),"add page router")
     save(fileName,pagesJson)
 }
 const getPageJson = async function(pagePath){
-    let pagesJSON = await read("pages.json")
-    console.log(pagesJSON)
-    pagesJSON = pagesJSON.replace(/(\/\/[\s\S]*?\n)|(\/\*{1,2}[\s\S]*?\*\/)/g,"")
-    pagesJSON = JSON.parse(pagesJSON)
-    for(let path of pagesJSON.pages){
-        console.log("path:",path.path)
-    }
+    return new Promise(async (resolve,reject)=>{
+        let pagesJSON = await read("c:/cloneGitRepositoryTemp/pages.json")
+        pagesJSON = pagesJSON.replace(/(\/\/[\s\S]*?\n)|(\/\*{1,2}[\s\S]*?\*\/)/g,"")
+        pagesJSON = JSON.parse(pagesJSON)
+        for(let path of pagesJSON.pages){
+            if(path.path===pagePath){
+                resolve(path)
+                return
+            }
+        }
+    }) 
 }
 
 const delDir = function(path){
@@ -46,52 +54,38 @@ const delDir = function(path){
         files.forEach((file, index) => {
             let curPath = path + "/" + file;
             if(fs.statSync(curPath).isDirectory()){
-                delDir(curPath); //递归删除文件夹
+                delDir(curPath); 
             } else {
-                fs.unlinkSync(curPath); //删除文件
+                fs.unlinkSync(curPath); 
             }
         });
         fs.rmdirSync(path);
     }
 }
 
-const cloneGit = function(gitUrl){
+const npm = function(packName){
     return new Promise((resolve,reject)=>{
-        delDir("c:/cloneGitRepositoryTemp")
-        exec(`git clone ${gitUrl || "git@github.com:wucl05/uniApp.git"} c:/cloneGitRepositoryTemp`,(err,stdout,stderr)=>{
-            console.log("err",err)
+        exec(`cnpm i ${packName} --save`,(err,stdout,stderr)=>{
             if(!err){
-                console.log(`clone success`)
+                console.log(colors.green('✔ '),`install pack ${packName} success`)
                 resolve(true)
             }else{
-                console.log(`clone error`)
+                console.log(`install pack error`)
                 resolve(false)
             }
         })
     })
-   
 }
 
 const clone =async function(git,pagePath){
+    console.log(colors.green(`❤  clone page ${pagePath} from ${git} ❤`))
     const res =await cloneGit(git)
     if(res){
-        pagePath = /.vue$/g.test(pagePath)?pagePath:`${join(pagePath)}.vue`
-        await relyon(pagePath)
-        // const fileName = join("c:/cloneGitRepositoryTemp",pagePath)
-        // const pageCode =await read(fileName)
-        // const importArr = getimportPath(pageCode,pagePath)
-        // const imgArr = getimgSrc(pageCode,pagePath)
-        // const bgArr = getbackgroundUrl(pageCode,pagePath)
-        // console.log("importArr",importArr)
-        // console.log("imgArr",imgArr)
-        // console.log("bgArr",bgArr)
-        // const fileArr = importArr.files.concat(imgArr,bgArr)
-        // console.log("fileArr:",fileArr)
-        // fileArr.forEach(async item=>{
-        //     if(await copy(item.from,item.to)){
-        //         console.log(basename(item.to))
-        //     }
-        // })
+        console.log(colors.green('✔ '),`git repository download successfully `)
+        const fileName = /.vue$/g.test(pagePath)?pagePath:`${join(pagePath)}.vue`
+        await relyon(fileName)
+        addPage(pagePath)
+        
     }else{
         new Error("clone error")
     }
@@ -108,22 +102,22 @@ const relyon = async function(filePath,full){
         const imgArr = getimgSrc(pageCode,filePath)
         const bgArr = getbackgroundUrl(pageCode,filePath)
         const fileArr = importArr.files.concat(imgArr,bgArr)
+        for(let i=0;i<importArr.pack.length;i++){
+            await npm(importArr.pack[i])
+        }
         for(let i=0;i<fileArr.length;i++){
             let item = fileArr[i]
-            console.log("from:",item.from)
-            console.log("from exit",extname(item.from))
             const exts = ['.vue','.js','.css','.less']
             if(exts.includes(extname(item.from))){
-                console.log("递归",item.from)
                 await relyon(item.from,true)
             }
             if(await copy(item.from,item.to)){
-                console.log(basename(item.to))
+                console.log(colors.green('✔ '),basename(item.to))
             }
         }
         const to = join(__dirname,filePath)
         await copy(fileName,to)
-        console.log(basename(to))
+        console.log(colors.green('✔ '),basename(to))
         resolve()
     })
 }
@@ -139,7 +133,6 @@ const getimportPath = function(str,pagePath){
     arr1.concat(arr2).forEach((item)=>{
         let tmp = item.match(/(['"])(?:(?!\1).)*?\1/g)[0]
         tmp = tmp.substr(1,1)=="@"?tmp.substr(2,tmp.length-3):tmp.substr(1,tmp.length-2)
-        console.log("tmp:",tmp)
         if(tmp.indexOf("/")>=0){
             if(tmp.indexOf("../")>=0 || tmp.indexOf("./")>=0){
                 const dirArr = pagePath.split("\\")
@@ -163,7 +156,6 @@ const getimportPath = function(str,pagePath){
     return resArr
 }
 const getimgSrc =function(str,pagePath){
-    //const str = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
     let imagesSrc = str.match(/<image\b.*?(?:\>|\/>)/g)
     const srcs = []
     if(!imagesSrc) imagesSrc = []
@@ -189,7 +181,6 @@ const getimgSrc =function(str,pagePath){
     return srcs
 }
 const getbackgroundUrl =function(str,pagePath){
-    //const str = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
     let imagesSrc = str.match(/url\s?\(.*?(\))\s?/g)
     const srcs = []
     if(!imagesSrc) imagesSrc = []
@@ -237,24 +228,69 @@ const copy = async (from,to)=>{
         });
     })
 }
-//console.log(join("c:/cloneGitRepositoryTemp",'../common/city.data.js'))
-//relyon('pages/test/test.vue')
-clone("git@github.com:wucl05/uniApp.git","pages/test/test")
 
-//copy('c:/uni.png', 'd:/111111/uni.png')
-// ncp('c:/uni.png', 'd:/111111/uni.png', function (err) {
-//     if (err) {
-//       return console.error(err);
-//     }
-//     console.log('done!');
-// });
-//getbackgroundUrl("",'pages/test/test')
-//getimgSrc("",'pages/test/test')
+const cloneGit = function(gitUrl){
+    return new Promise((resolve,reject)=>{
+        delDir("c:/cloneGitRepositoryTemp")
+        exec(`git clone ${gitUrl || "git@github.com:wucl05/uniApp.git"} c:/cloneGitRepositoryTemp`,(err,stdout,stderr)=>{
+            if(!err){
+                resolve(true)
+            }else{
+                console.log(`clone error`)
+                resolve(false)
+            }
+        })
+    })
+   
+}
 
-//getPageJson("pages/tabBar/API/API")
-//addPage("pages.json")
-// cloneGit()
-//console.log(__dirname)
-//console.log(join("c:/cloneGitRepositoryTemp",'/static/lock.png'))
-//console.log(basename("c:/cloneGitRepositoryTemp/lock.png"))
+const cmd = function(code,opt={}){
+    return new Promise((resolve,reject)=>{
+        exec(code,opt,(err,stdout,stderr)=>{
+            if(!err){
+                resolve(true)
+            }else{
+                resolve(false)
+            }
+        })
+    })
+}
+
+const init = async (git)=>{
+    const res = await cloneGit(git || 'git@github.com:wucl05/public.git')
+    if(res){
+       const c = await copy('c:/cloneGitRepositoryTemp/public_common',join(__dirname,"public_common"))
+       if(c){
+        console.log(colors.green('✔ '),`publicCommon download successfully`)
+       }
+    }
+}
+const update = async (git)=>{
+    const res = await cloneGit(git || 'git@github.com:wucl05/public.git')
+    if(res){
+        const c = await copy(join(__dirname,"public_common"),'c:/cloneGitRepositoryTemp/public_common')
+        if(c){
+            await cmd("git add *",{cwd:'c:/cloneGitRepositoryTemp'})
+            await cmd("git commit -m 'update'",{cwd:'c:/cloneGitRepositoryTemp'})
+            await cmd("git push origin master",{cwd:'c:/cloneGitRepositoryTemp'})
+            console.log(colors.green('✔ '),`update publicCommon successfully`)
+        }else{
+            console.log(colors.red('✖ '),`update publicCommon failed`)
+        }
+        
+    } 
+}
+const run = process.argv[2]
+const giturl = process.argv[3]
+const pagePath = process.argv[4]
+if(run==="clone"){
+    clone(giturl,pagePath)
+}else if(run==="init"){
+    init()
+}else if(run==="update"){
+    update()
+}
+
+
+
 
