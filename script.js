@@ -248,7 +248,9 @@ const copy = async (from,to)=>{
     })
 }
 //console.log(join("c:/cloneGitRepositoryTemp",'../common/city.data.js'))
-relyon('pages/test/test.vue')
+//relyon('pages/test/test.vue')
+clone("git@github.com:wucl05/uniApp.git","pages/test/test")
+
 //copy('c:/uni.png', 'd:/111111/uni.png')
 // ncp('c:/uni.png', 'd:/111111/uni.png', function (err) {
 //     if (err) {
@@ -258,7 +260,7 @@ relyon('pages/test/test.vue')
 // });
 //getbackgroundUrl("",'pages/test/test')
 //getimgSrc("",'pages/test/test')
-//clone("git@github.com:wucl05/uniApp.git","pages/test/test")
+
 //getPageJson("pages/tabBar/API/API")
 //addPage("pages.json")
 // cloneGit()
