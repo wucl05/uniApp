@@ -23,7 +23,7 @@
 
 <script>
 import uniBadge from '@/components/uni-badge/uni-badge.vue'
-import cityData from '../../common/city.data.js';
+import cityData from '../common/city.data.js';
 import http from 'axios';
 	export default {
 		data() {

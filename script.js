@@ -110,8 +110,14 @@ const relyon = async function(filePath,full){
         const importArr = getimportPath(pageCode,filePath)
         const imgArr = getimgSrc(pageCode,filePath)
         const bgArr = getbackgroundUrl(pageCode,filePath)
+        console.log('importArr:',importArr)
+        console.log('imgArr:',imgArr)
+        console.log('bgArr:',bgArr)
+        
+
         const fileArr = importArr.files.concat(imgArr,bgArr)
-        fileArr.forEach(async item=>{
+        for(let i=0;i<fileArr.length;i++){
+            let item = fileArr[i]
             console.log("from:",item.from)
             console.log("from exit",extname(item.from))
             const exts = ['.vue','.js','.css','.less']
@@ -122,7 +128,7 @@ const relyon = async function(filePath,full){
             if(await copy(item.from,item.to)){
                 console.log(basename(item.to))
             }
-        })
+        }
         const to = join(__dirname,filePath)
         await copy(fileName,to)
         console.log(basename(to))
@@ -130,20 +136,25 @@ const relyon = async function(filePath,full){
     })
 }
 const getimportPath = function(str,pagePath){
-    const arr1 = str.match(/import\s?\w*\s?from\s?\s\S*('|")/g)
-    const arr2 = str.match(/@import\s?\s\S*('|")/g)
+    let arr1 = str.match(/import\s?\w*\s?from\s?\s\S*('|")/g)
+    let arr2 = str.match(/@import\s?\s\S*('|")/g)
     const resArr = {
         files:[],
         pack:[]
     }
+    if(!arr1) arr1=[]
+    if(!arr2) arr2=[]
     arr1.concat(arr2).forEach((item)=>{
         let tmp = item.match(/(['"])(?:(?!\1).)*?\1/g)[0]
         tmp = tmp.substr(1,1)=="@"?tmp.substr(2,tmp.length-3):tmp.substr(1,tmp.length-2)
+        console.log("tmp:",tmp)
         if(tmp.indexOf("/")>=0){
             if(tmp.indexOf("../")>=0 || tmp.indexOf("./")>=0){
                 const dirArr = pagePath.split("\\")
                 dirArr.splice(dirArr.length-1,1)
                 const pathTemp = dirArr.join("/")
+                console.log("dirArr:",dirArr)
+                console.log('pathTemp:',pathTemp)
                 resArr.files.push({
                     from:join("c:/cloneGitRepositoryTemp",pathTemp,tmp),
                     to:join(__dirname,pathTemp,tmp)
@@ -163,8 +174,9 @@ const getimportPath = function(str,pagePath){
 }
 const getimgSrc =function(str,pagePath){
     //const str = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
-    const imagesSrc = str.match(/<image\b.*?(?:\>|\/>)/g)
+    let imagesSrc = str.match(/<image\b.*?(?:\>|\/>)/g)
     const srcs = []
+    if(!imagesSrc) imagesSrc = []
     imagesSrc.forEach(item=>{
         let src = item.match(/src\s?=\s?[\'\"]?([^\'\"]*)[\'\"]?/g)[0]
         src = src.match(/(['"])(?:(?!\1).)*?\1/g)[0]
@@ -188,24 +200,27 @@ const getimgSrc =function(str,pagePath){
 }
 const getbackgroundUrl =function(str,pagePath){
     //const str = await read('c:/cloneGitRepositoryTemp/pages/test/test.vue')
-    const imagesSrc = str.match(/url\s?\(.*?(\))\s?/g)
+    let imagesSrc = str.match(/url\s?\(.*?(\))\s?/g)
     const srcs = []
+    if(!imagesSrc) imagesSrc = []
     imagesSrc.forEach(src=>{
         src = src.match(/(['"])(?:(?!\1).)*?\1/g)[0]
         const dirArr = pagePath.indexOf("/")>=0?pagePath.split("/"):pagePath.split("\\")
         dirArr.splice(dirArr.length-1,1)
         const pathTemp = dirArr.join("/")
         src = src.substr(1,src.length-2)
-        if(src.indexOf("../")>=0 || src.indexOf("./")>=0){
-            srcs.push({
-                from:join("c:/cloneGitRepositoryTemp",pathTemp,src),
-                to:join(__dirname,pathTemp,src)
-            })
-        }else{
-            srcs.push({
-                from:join("c:/cloneGitRepositoryTemp",src),
-                to:join(__dirname,src)
-            })
+        if(!src.match(/^\s?(http|https):\/\//g)){
+            if(src.indexOf("../")>=0 || src.indexOf("./")>=0){
+                srcs.push({
+                    from:join("c:/cloneGitRepositoryTemp",pathTemp,src),
+                    to:join(__dirname,pathTemp,src)
+                })
+            }else{
+                srcs.push({
+                    from:join("c:/cloneGitRepositoryTemp",src),
+                    to:join(__dirname,src)
+                })
+            }
         }
     })
     return srcs
@@ -232,6 +247,8 @@ const copy = async (from,to)=>{
         });
     })
 }
+//console.log(join("c:/cloneGitRepositoryTemp",'../common/city.data.js'))
+relyon('pages/test/test.vue')
 //copy('c:/uni.png', 'd:/111111/uni.png')
 // ncp('c:/uni.png', 'd:/111111/uni.png', function (err) {
 //     if (err) {
@@ -241,7 +258,7 @@ const copy = async (from,to)=>{
 // });
 //getbackgroundUrl("",'pages/test/test')
 //getimgSrc("",'pages/test/test')
-clone("git@github.com:wucl05/uniApp.git","pages/test/test")
+//clone("git@github.com:wucl05/uniApp.git","pages/test/test")
 //getPageJson("pages/tabBar/API/API")
 //addPage("pages.json")
 // cloneGit()
